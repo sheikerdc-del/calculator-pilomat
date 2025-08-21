@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Калькулятор пиломатериалов</title>
+  <style>
+    body { margin:0; padding:0; font-family:Arial,sans-serif; background:#f9f9f9; }
+    .container { max-width:600px; margin:20px auto; padding:15px; background:#fff; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+    h1, h2 { text-align:center; }
+    .field { margin-bottom:12px; }
+    label { display:block; margin-bottom:4px; font-weight:bold; }
+    input, select, button { width:100%; padding:8px; box-sizing:border-box; font-size:14px; }
+    .inline { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    .inline .field, .inline button { flex:1 1 150px; }
+    #result { margin-top:20px; white-space:pre-line; font-weight:bold; background:#eef; padding:10px; border-radius:4px; }
+    #entries { margin-top:10px; }
+    .entry { padding:8px; border:1px solid #ccc; margin-bottom:6px; white-space:pre-line; border-radius:4px; background:#fafafa; }
+    .available { color: #006600; }
+    .unavailable { color: #cc0000; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Калькулятор пиломатериалов</h1>
+
+    <!-- Выбор породы и плотности -->
+    <div class="field">
+      <label for="speciesSelect">Порода древесины</label>
+      <select id="speciesSelect">
+        <option value="pine">Сосна</option>
+        <option value="spruce">Ель</option>
+        <option value="larch">Лиственница</option>
+        <option value="birch">Берёза</option>
+        <option value="aspen">Осина</option>
+        <option value="oak">Дуб</option>
+        <option value="ash">Ясень</option>
+        <option value="maple">Клён</option>
+        <option value="beech">Бук</option>
+        <option value="alder">Ольха</option>
+        <option value="poplar">Тополь</option>
+        <option value="cedar">Кедр</option>
+        <option value="fir">Пихта</option>
+        <option value="willow">Ива</option>
+        <option value="lime">Липа</option>
+        <option value="cherry">Вишня</option>
+        <option value="walnut">Орех</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="density">Плотность (кг/м³)</label>
+      <input type="number" id="density" readonly />
+    </div>
+
+    <!-- Размеры одной заготовки -->
+    <div class="inline">
+      <div class="field">
+        <label for="widthValue">Ширина</label>
+        <input type="number" id="widthValue" placeholder="Значение" />
+      </div>
+      <div class="field">
+        <label for="widthUnit">Ед. изм.</label>
+        <select id="widthUnit">
+          <option value="mm">мм</option>
+          <option value="cm">см</option>
+          <option value="m" selected>м</option>
+          <option value="in">in</option>
+          <option value="ft">ft</option>
+        </select>
+      </div>
+    </div>
+    <div class="inline">
+      <div class="field">
+        <label for="thicknessValue">Толщина</label>
+        <input type="number" id="thicknessValue" placeholder="Значение" />
+      </div>
+      <div class="field">
+        <label for="thicknessUnit">Ед. изм.</label>
+        <select id="thicknessUnit">
+          <option value="mm">мм</option>
+          <option value="cm">см</option>
+          <option value="m" selected>м</option>
+          <option value="in">in</option>
+          <option value="ft">ft</option>
+        </select>
+      </div>
+    </div>
+    <div class="inline">
+      <div class="field">
+        <label for="lengthValue">Длина одной заготовки</label>
+        <input type="number" id="lengthValue" placeholder="Значение" />
+      </div>
+      <div class="field">
+        <label for="lengthUnit">Ед. изм.</label>
+        <select id="lengthUnit">
+          <option value="m" selected>м</option>
+          <option value="ft">ft</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Способы расчёта: кол-во, общий объём, общая длина -->
+    <div class="inline">
+      <div class="field">
+        <label for="quantity">Кол-во штук</label>
+        <input type="number" id="quantity" placeholder="0" min="0" />
+      </div>
+      <div class="field">
+        <label for="totalVolume">Общий объём (м³)</label>
+        <input type="number" id="totalVolume" placeholder="0" step="0.001" min="0" />
+      </div>
+      <div class="field">
+        <label for="totalLinear">Общая длина (м)</label>
+        <input type="number" id="totalLinear" placeholder="0" min="0" />
+      </div>
+    </div>
+
+    <!-- Влажность и цена -->
+    <div class="inline">
+      <div class="field">
+        <label for="moisturePercent">Влажность (%)</label>
+        <input type="number" id="moisturePercent" value="0" min="0" max="100" />
+      </div>
+      <div class="field">
+        <label for="pricePerM3">Цена за м³</label>
+        <input type="number" id="pricePerM3" placeholder="0" step="0.01" min="0" />
+      </div>
+      <div class="field">
+        <label for="priceCurrency">Валюта</label>
+        <select id="priceCurrency">
+          <option value="RUB">₽</option>
+          <option value="USD">$</option>
+          <option value="EUR">€</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="inline">
+      <button id="calcBtn">Рассчитать</button>
+      <button id="clearHistoryBtn">Очистить историю</button>
+      <button id="exportCsvBtn">Экспорт CSV</button>
+      <button id="exportXlsBtn">Экспорт Excel</button>
+    </div>
+
+    <!-- Результат и история -->
+    <div id="result"></div>
+    <h2>История расчётов</h2>
+    <div id="entries"></div>
+  </div>
+
+  <script>
+    const toMeters = {
+      mm: v => v/1000,
+      cm: v => v/100,
+      m : v => v,
+      in: v => v*0.0254,
+      ft: v => v*0.3048
+    };
+
+    // Расширенная база данных плотностей древесины (кг/м³)
+    const speciesDensity = {
+      pine:   500,   // Сосна
+      spruce: 450,   // Ель
+      larch:  600,   // Лиственница
+      birch:  650,   // Берёза
+      aspen:  500,   // Осина
+      oak:    700,   // Дуб
+      ash:    680,   // Ясень
+      maple:  650,   // Клён
+      beech:  720,   // Бук
+      alder:  520,   // Ольха
+      poplar: 460,   // Тополь
+      cedar:  400,   // Кедр
+      fir:    420,   // Пихта
+      willow: 460,   // Ива
+      lime:   500,   // Липа
+      cherry: 580,   // Вишня
+      walnut: 640    // Орех
+    };
+
+    const STORAGE_KEY = 'lumberCalcHistory';
+
+    function loadHistory(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function saveHistory(data){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function renderHistory(){
+      const cont = document.getElementById('entries');
+      cont.innerHTML = '';
+      loadHistory().forEach(item => {
+        const d = document.createElement('div');
+        d.className = 'entry';
+        d.textContent =
+          `Дата: ${item.date}
+Размеры: ${item.width || 'N/A'}${item.wUnit || ''} × ${item.thickness || 'N/A'}${item.tUnit || ''} × ${item.length || 'N/A'}${item.lUnit || ''}
+Кол-во: ${item.quantity || 'N/A'} шт
+Объём 1: ${item.volSingle ? item.volSingle.toFixed(4) : 'N/A'} м³
+Общий объём: ${item.volTotal ? item.volTotal.toFixed(3) : 'N/A'} м³
+Вес сухой: ${item.weightDry ? item.weightDry.toFixed(2) : 'N/A'} кг
+Вес влажный: ${item.weightWet ? item.weightWet.toFixed(2) : 'N/A'} кг
+Стоимость: ${item.cost ? item.cost.toFixed(2) : 'N/A'} ${item.priceCurrency || ''}
+6м/3м (V): ${item.count6Vol || 0}/${item.count3Vol || 0} шт
+6м/3м (L): ${item.count6Lin || 0}/${item.count3Lin || 0} шт`;
+        cont.appendChild(d);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const speciesSelect = document.getElementById('speciesSelect');
+      const densityInput  = document.getElementById('density');
+      const calcBtn       = document.getElementById('calcBtn');
+      const clearBtn      = document.getElementById('clearHistoryBtn');
+      const csvBtn        = document.getElementById('exportCsvBtn');
+      const xlsBtn        = document.getElementById('exportXlsBtn');
+
+      function updateDensity(){
+        densityInput.value = speciesDensity[speciesSelect.value] || 0;
+      }
+      speciesSelect.addEventListener('change', updateDensity);
+      updateDensity();
+
+      calcBtn.addEventListener('click', onCalculate);
+      clearBtn.addEventListener('click', () => {
+        localStorage.removeItem(STORAGE_KEY);
+        renderHistory();
+      });
+      csvBtn.addEventListener('click', exportCsv);
+      xlsBtn.addEventListener('click', exportXls);
+
+      renderHistory();
+    });
+
+    function onCalculate(){
+      const wV   = parseFloat(document.getElementById('widthValue').value) || 0;
+      const wU   = document.getElementById('widthUnit').value;
+      const tV   = parseFloat(document.getElementById('thicknessValue').value) || 0;
+      const tU   = document.getElementById('thicknessUnit').value;
+      const lV   = parseFloat(document.getElementById('lengthValue').value) || 0;
+      const lU   = document.getElementById('lengthUnit').value;
+      const qty  = parseInt(document.getElementById('quantity').value) || 0;
+      const totV = parseFloat(document.getElementById('totalVolume').value) || 0;
+      const totL = parseFloat(document.getElementById('totalLinear').value) || 0;
+      const price= parseFloat(document.getElementById('pricePerM3').value) || 0;
+      const cur  = document.getElementById('priceCurrency').value;
+      const dens = parseFloat(document.getElementById('density').value) || 0;
+      const mo   = parseFloat(document.getElementById('moisturePercent').value) || 0;
+      const out  = document.getElementById('result');
+
+      let resultText = '';
+
+      // Расчет размеров в метрах
+      const w_m = wV > 0 ? toMeters[wU](wV) : 0;
+      const t_m = tV > 0 ? toMeters[tU](tV) : 0;
+      const len = lV > 0 ? toMeters[lU](lV) : 0;
+      const area = (w_m > 0 && t_m > 0) ? w_m * t_m : 0;
+      const volSingle = (area > 0 && len > 0) ? area * len : 0;
+
+      // Определение общего объёма
+      let volTotal = 0;
+      if (qty > 0 && volSingle > 0) {
+        volTotal = volSingle * qty;
+      } else if (totV > 0) {
+        volTotal = totV;
+      } else if (totL > 0 && area > 0) {
+        volTotal = area * totL;
+      }
+
+      // Отображение объёмов
+      if (volSingle > 0) {
+        resultText += `<span class="available">Объём 1 заготовки: ${volSingle.toFixed(4)} м³</span>\n`;
+      } else {
+        resultText += `<span class="unavailable">Объём 1 заготовки: нет данных (нужны ширина, толщина, длина)</span>\n`;
+      }
+
+      if (volTotal > 0) {
+        resultText += `<span class="available">Общий объём: ${volTotal.toFixed(3)} м³</span>\n`;
+      } else {
+        resultText += `<span class="unavailable">Общий объём: нет данных</span>\n`;
+      }
+
+      // Расчет веса
+      if (volTotal > 0 && dens > 0) {
+        const weightDry = volTotal * dens;
+        const weightWet = weightDry * (1 + mo/100);
+        resultText += `<span class="available">Вес сухой: ${weightDry.toFixed(2)} кг</span>\n`;
+        if (mo > 0) {
+          resultText += `<span class="available">Вес влажный (+${mo}%): ${weightWet.toFixed(2)} кг</span>\n`;
+        }
+      } else {
+        resultText += `<span class="unavailable">Вес: нет данных (нужен объём и плотность)</span>\n`;
+      }
+
+      // Расчет стоимости
+      if (volTotal > 0 && price > 0) {
+        const cost = volTotal * price;
+        resultText += `<span class="available">Стоимость: ${cost.toFixed(2)} ${cur}</span>\n`;
+      } else {
+        resultText += `<span class="unavailable">Стоимость: нет данных (нужен объём и цена)</span>\n`;
+      }
+
+      // Расчёт 6м/3м по объёму
+      if (area > 0 && volTotal > 0) {
+        const vol6 = area * 6;
+        const vol3 = area * 3;
+        const count6Vol = Math.floor(volTotal / vol6);
+        const remV = volTotal - count6Vol * vol6;
+        const count3Vol = Math.floor(remV / vol3);
+        resultText += `<span class="available">По объёму: 6м = ${count6Vol} шт, 3м = ${count3Vol} шт</span>\n`;
+      } else {
+        resultText += `<span class="unavailable">Расчет 6м/3м по объёму: нет данных (нужны размеры сечения и объём)</span>\n`;
+      }
+
+      // Расчёт 6м/3м по длине
+      if (totL > 0) {
+        const count6Lin = Math.floor(totL / 6);
+        const remL = totL - count6Lin * 6;
+        const count3Lin = Math.floor(remL / 3);
+        resultText += `<span class="available">По длине: 6м = ${count6Lin} шт, 3м = ${count3Lin} шт</span>\n`;
+      } else {
+        resultText += `<span class="unavailable">Расчет 6м/3м по длине: нет данных (нужна общая длина)</span>\n`;
+      }
+
+      out.innerHTML = resultText;
+
+      // Сохранение в историю (только если есть хоть какие-то расчеты)
+      if (resultText.includes('class="available"')) {
+        const h = loadHistory();
+        h.unshift({
+          date: new Date().toLocaleString(),
+          width: wV || null, wUnit: wV ? wU : null,
+          thickness: tV || null, tUnit: tV ? tU : null,
+          length: lV || null, lUnit: lV ? lU : null,
+          quantity: qty || null,
+          volSingle: volSingle || null,
+          volTotal: volTotal || null,
+          weightDry: (volTotal > 0 && dens > 0) ? volTotal * dens : null,
+          weightWet: (volTotal > 0 && dens > 0) ? volTotal * dens * (1 + mo/100) : null,
+          cost: (volTotal > 0 && price > 0) ? volTotal * price : null,
+          priceCurrency: price > 0 ? cur : null,
+          moisturePercent: mo || null,
+          count6Vol: (area > 0 && volTotal > 0) ? Math.floor(volTotal / (area * 6)) : null,
+          count3Vol: (area > 0 && volTotal > 0) ? Math.floor((volTotal - Math.floor(volTotal / (area * 6)) * area * 6) / (area * 3)) : null,
+          count6Lin: totL > 0 ? Math.floor(totL / 6) : null,
+          count3Lin: totL > 0 ? Math.floor((totL - Math.floor(totL / 6) * 6) / 3) : null
+        });
+        saveHistory(h);
+        renderHistory();
+      }
+    }
+
+    function exportCsv(){
+      const history = loadHistory();
+      if (!history.length) { alert('Нет данных для экспорта'); return; }
+      let csv = 'Дата;Размеры;Кол-во;Объём1;Общий объём;Вес сухой;Вес влажный;Стоимость;6м/3м (V);6м/3м (L)\n';
+      history.forEach(i=>{
+        const size = `${i.width||'N/A'}${i.wUnit||''}×${i.thickness||'N/A'}${i.tUnit||''}×${i.length||'N/A'}${i.lUnit||''}`;
+        csv += `${i.date};${size};${i.quantity||'N/A'};${i.volSingle?.toFixed(4)||'N/A'};${i.volTotal?.toFixed(3)||'N/A'};${i.weightDry?.toFixed(2)||'N/A'};${i.weightWet?.toFixed(2)||'N/A'};${i.cost?.toFixed(2)||'N/A'};${i.count6Vol||0}/${i.count3Vol||0};${i.count6Lin||0}/${i.count3Lin||0}\n`;
+      });
+      const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'history.csv';
+      link.click();
+    }
+
+    function exportXls(){
+      const history = loadHistory();
+      if (!history.length) { alert('Нет данных для экспорта'); return; }
+      let html = '<table border="1"><tr><th>Дата</th><th>Размеры</th><th>Кол-во</th><th>Объём1</th><th>Общий объём</th><th>Вес сухой</th><th>Вес влажный</th><th>Стоимость</th><th>6м/3м (V)</th><th>6м/3м (L)</th></tr>';
+      history.forEach(i=>{
+        const size = `${i.width||'N/A'}${i.wUnit||''}×${i.thickness||'N/A'}${i.tUnit||''}×${i.length||'N/A'}${i.lUnit||''}`;
+        html += `<tr><td>${i.date}</td><td>${size}</td><td>${i.quantity||'N/A'}</td><td>${i.volSingle?.toFixed(4)||'N/A'}</td><td>${i.volTotal?.toFixed(3)||'N/A'}</td><td>${i.weightDry?.toFixed(2)||'N/A'}</td><td>${i.weightWet?.toFixed(2)||'N/A'}</td><td>${i.cost?.toFixed(2)||'N/A'}</td><td>${(i.count6Vol||0)}/${(i.count3Vol||0)}</td><td>${(i.count6Lin||0)}/${(i.count3Lin||0)}</td></tr>`;
+      });
+      html += '</table>';
+      const blob = new Blob([html], { type:'application/vnd.ms-excel' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'history.xls';
+      link.click();
+    }
+  </script>
+</body>
+</html>
